@@ -4,6 +4,7 @@
 use hex::FromHex;
 use md5::{digest::generic_array::GenericArray, Digest, Md5};
 use sha1::Sha1;
+use sha2::Sha256;
 use std::{io, path::Path};
 use thiserror::Error;
 
@@ -80,6 +81,30 @@ pub fn compare_hash(
 
             let mut buffer = vec![0u8; 8 * 1024];
             let mut hasher = Md5::new();
+
+            loop {
+                match file.read(&mut buffer) {
+                    Ok(0) => break,
+                    Ok(bytes) => hasher.update(&buffer[..bytes]),
+                    Err(why) => return Err(ChecksumError::FileRead(why)),
+                }
+            }
+
+            let hash = &*hasher.finalize();
+
+            if &*expected == hash {
+                Ok(())
+            } else {
+                Err(ChecksumError::Mismatch)
+            }
+        }
+        RequestChecksum::Sha256(sum) => {
+            let expected = <[u8; 16]>::from_hex(&*sum)
+                .map(GenericArray::from)
+                .map_err(|_| ChecksumError::InvalidInput(format!("Sha256 {}", sum)))?;
+
+            let mut buffer = vec![0u8; 8 * 1024];
+            let mut hasher = Sha256::new();
 
             loop {
                 match file.read(&mut buffer) {

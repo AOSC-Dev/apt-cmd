@@ -161,6 +161,8 @@ impl AptGet {
     ) -> io::Result<Result<HashSet<Request>, RequestError>> {
         self.arg("--print-uris");
         self.args(command);
+        self.arg("-o");
+        self.arg("Acquire::ForceHash=sha256");
 
         let (mut child, stdout) = self.spawn_with_stdout().await?;
 

@@ -32,6 +32,7 @@ pub enum RequestError {
 pub enum RequestChecksum {
     Md5(String),
     Sha1(String),
+    Sha256(String),
 }
 
 #[derive(Debug, Clone, Eq)]
@@ -89,6 +90,8 @@ impl FromStr for Request {
             RequestChecksum::Md5(value.to_owned())
         } else if let Some(value) = checksum_string.strip_prefix("SHA1:") {
             RequestChecksum::Sha1(value.to_owned())
+        } else if let Some(value) = checksum_string.strip_prefix("SHA256:") {
+            RequestChecksum::Sha256(value.to_owned())
         } else {
             return Err(RequestError::UnknownChecksum(checksum_string.into()));
         };
